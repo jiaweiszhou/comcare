@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>ComCare — ADRD Caregiver Assistant</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#2e7fa8"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<!-- iOS specific -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="ComCare"/>
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png"/>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --sage: #2e7fa8;
+  --sage-light: #e8f4fa;
+  --sage-mid: #90c4dd;
+  --sage-dark: #1a5472;
+  --warm: #faf8f3;
+  --warm-mid: #ede8dc;
+  --warm-dark: #c9bc9e;
+  --text: #1e2a30;
+  --text-mid: #4a5a63;
+  --text-light: #8a9aa3;
+  --white: #ffffff;
+  --danger: #b03a2e;
+  --danger-light: #fdecea;
+  --amber: #b07d1a;
+  --amber-light: #fef6e4;
+  --green: #2e7a4a;
+  --green-light: #e8f6ee;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--warm);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+
+/* TOP BAR */
+.topbar{background:#f8f6f0;border-bottom:1px solid var(--warm-mid);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:10px;font-family:'DM Serif Display',serif;font-size:20px;color:var(--sage-dark);}
+.brand-icon{width:34px;height:34px;background:var(--sage);border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.brand-icon svg{width:18px;height:18px;fill:white;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.backend-badge{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;background:var(--green-light);color:var(--green);border:1px solid #b6dfc5;}
+.backend-badge.azure{background:var(--sage-light);color:var(--sage-dark);border-color:var(--sage-mid);}
+.backend-badge.openai{background:var(--amber-light);color:var(--amber);border-color:#fad5a0;}
+.backend-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.lang-toggle{display:flex;background:var(--warm);border-radius:20px;padding:3px;gap:2px;}
+.lang-btn{padding:4px 14px;border-radius:16px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:transparent;color:var(--text-mid);transition:all .2s;}
+.lang-btn.active{background:var(--white);color:var(--sage-dark);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+
+/* LAYOUT */
+.app-body{display:flex;flex:1;max-width:1200px;margin:0 auto;width:100%;padding:0 16px;}
+
+/* SIDEBAR */
+.sidebar{width:200px;flex-shrink:0;padding:20px 0;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--warm-mid);background:#f8f6f0;}
+.nav-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);padding:10px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--radius-sm);cursor:pointer;font-size:14px;font-weight:400;color:var(--text-mid);transition:all .2s;border:none;background:transparent;text-align:left;width:100%;}
+.nav-item:hover{background:var(--white);color:var(--text);}
+.nav-item.active{background:var(--sage-light);color:var(--sage-dark);font-weight:600;border-left:3px solid var(--sage);padding-left:11px;}
+.nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nav-primary-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--sage);padding:2px 14px;}
+.separator{height:1px;background:var(--warm-mid);margin:8px 12px;}
+
+/* MAIN */
+.main{flex:1;padding:24px 0 24px 24px;min-width:0;}
+.page{display:none;}
+.page.active{display:flex;flex-direction:column;gap:20px;}
+.page-header h1{font-family:'DM Serif Display',serif;font-size:22px;color:var(--sage-dark);margin-bottom:4px;}
+.page-header p{font-size:14px;color:var(--text-light);}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--warm-mid);padding:20px;box-shadow:var(--shadow);}
+.card-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card-title svg{width:16px;height:16px;stroke:var(--sage);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.stat-card{background:var(--white);border:1px solid var(--warm-mid);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:6px;}
+.stat-num{font-size:28px;font-weight:600;color:var(--sage);}
+.stat-label{font-size:12px;color:var(--text-light);}
+.stat-icon{font-size:22px;margin-bottom:4px;}
+.dash-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.info-card{background:var(--white);border:1px solid var(--warm-mid);border-radius:var(--radius);padding:16px;}
+.info-card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);margin-bottom:6px;}
+.info-card-value{font-size:14px;font-weight:500;color:var(--text);line-height:1.5;}
+.info-card-sub{font-size:12px;color:var(--text-mid);margin-top:4px;}
+.info-card.highlight{border-color:var(--sage-mid);background:var(--sage-light);}
+
+/* ALERTS */
+.alert{background:var(--danger-light);border:1px solid #f5c6c2;border-radius:var(--radius-sm);padding:12px 16px;display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--danger);}
+.alert svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;margin-top:1px;}
+.alert-info{background:var(--amber-light);border-color:#fad5a0;color:var(--amber);}
+.alert-success{background:var(--green-light);border-color:#b6dfc5;color:var(--green);}
+
+/* TIMELINE */
+.timeline-entry{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--warm-mid);font-size:13px;align-items:flex-start;}
+.timeline-entry:last-child{border-bottom:none;}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--sage-mid);margin-top:5px;flex-shrink:0;}
+.tl-dot.red{background:#e87070;}
+.tl-dot.amber{background:#e8aa50;}
+.tl-time{color:var(--text-light);font-size:11px;margin-top:2px;}
+.tl-title{font-weight:500;}
+
+/* FORMS */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.form-label{font-size:13px;font-weight:500;color:var(--text-mid);}
+.form-input,.form-select,.form-textarea{padding:9px 12px;border:1px solid var(--warm-mid);border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);background:var(--white);transition:border-color .2s;width:100%;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--sage-mid);}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-hint{font-size:11px;color:var(--text-light);margin-top:-8px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .2s;}
+.btn-primary{background:var(--sage);color:white;}
+.btn-primary:hover{background:var(--sage-dark);}
+.btn-outline{background:transparent;border:1px solid var(--sage-mid);color:var(--sage-dark);}
+.btn-outline:hover{background:var(--sage-light);}
+.btn-ghost{background:transparent;border:1px solid var(--warm-mid);color:var(--text-mid);}
+.btn-ghost:hover{background:var(--warm-mid);}
+.btn-danger{background:var(--danger);color:white;}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+.btn-sm{padding:6px 12px;font-size:12px;}
+
+/* TAGS */
+.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;}
+.tag-sage{background:var(--sage-light);color:var(--sage-dark);}
+.tag-amber{background:var(--amber-light);color:var(--amber);}
+.tag-red{background:var(--danger-light);color:var(--danger);}
+.tag-gray{background:var(--warm-mid);color:var(--text-mid);}
+.tag-green{background:var(--green-light);color:var(--green);}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:400px;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--warm);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--warm-mid);border-bottom:none;}
+.msg{display:flex;gap:10px;max-width:80%;align-items:flex-start;}
+.msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.msg-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+.msg-avatar.ai{background:var(--sage-dark);color:white;}
+.msg-avatar.user{background:var(--warm-mid);color:var(--text-mid);}
+.msg-bubble{padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.6;}
+.msg.ai .msg-bubble{background:var(--white);border:1px solid var(--warm-mid);border-top-left-radius:4px;color:var(--text);}
+.msg.ai .msg-bubble.msg-urgent{border:2px solid var(--danger);background:var(--danger-light);}
+.msg.user .msg-bubble{background:var(--sage);color:white;border-top-right-radius:4px;}
+.explain-link{background:none;border:none;padding:0;margin-top:6px;font-size:11px;color:var(--sage-dark);text-decoration:underline;cursor:pointer;font-family:'Nunito',sans-serif;display:inline-block;}
+.explain-box{margin-top:6px;padding:8px 10px;background:var(--sage-light);border:1px solid var(--sage-mid);border-radius:8px;font-size:12px;color:var(--text);line-height:1.5;}
+.msg-time{font-size:11px;color:var(--text-light);margin-top:4px;}
+.msg.ai .msg-time{text-align:left;}
+.msg.user .msg-time{text-align:right;}
+
+/* Inline record draft card in chat */
+.record-draft{background:var(--white);border:2px solid var(--sage-mid);border-radius:var(--radius);padding:14px 16px;margin-top:10px;width:100%;max-width:480px;}
+.record-draft-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.record-draft-title{font-size:14px;font-weight:700;color:var(--sage-dark);}
+.record-draft-badge{font-size:11px;font-weight:500;background:var(--sage-light);color:var(--sage-dark);padding:2px 8px;border-radius:10px;border:1px solid var(--sage-mid);}
+.record-draft-fields{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.draft-field{display:grid;grid-template-columns:110px 1fr;gap:6px;align-items:start;font-size:13px;}
+.draft-field-label{color:var(--text-light);font-weight:500;padding-top:7px;}
+.draft-field input,.draft-field select,.draft-field textarea{padding:6px 9px;border:1px solid var(--warm-mid);border-radius:6px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--text);background:var(--warm);width:100%;}
+.draft-field textarea{resize:vertical;min-height:60px;}
+.draft-field input:focus,.draft-field select:focus,.draft-field textarea:focus{outline:none;border-color:var(--sage-mid);background:var(--white);}
+.record-draft-actions{display:flex;gap:8px;}
+
+.chat-input-area{background:var(--white);border:1px solid var(--warm-mid);border-radius:0 0 var(--radius) var(--radius);padding:12px 16px;}
+.suggested-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.chip{padding:5px 12px;border-radius:16px;border:1px solid var(--sage-mid);background:transparent;color:var(--sage-dark);font-size:12px;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;}
+.chip:hover{background:var(--sage-light);}
+.chat-input-row{display:flex;gap:10px;align-items:flex-end;}
+.chat-input{flex:1;padding:10px 14px;border:1px solid var(--warm-mid);border-radius:var(--radius-sm);font-family:'Nunito',sans-serif;font-size:14px;resize:none;min-height:42px;max-height:120px;color:var(--text);background:var(--warm);}
+.chat-input:focus{outline:none;border-color:var(--sage-mid);}
+.chat-send{width:40px;height:40px;border-radius:50%;background:var(--sage);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s;}
+.chat-send:hover{background:var(--sage-dark);}
+.chat-send svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;}
+.typing{display:flex;gap:4px;align-items:center;}
+.typing span{width:6px;height:6px;background:var(--sage-mid);border-radius:50%;animation:bounce 1.2s infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-6px);}}
+
+/* RECORD CARDS */
+.card-type-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.card-type-btn{background:var(--white);border:1px solid var(--warm-mid);border-radius:var(--radius);padding:16px;cursor:pointer;text-align:left;transition:all .2s;font-family:'Nunito',sans-serif;}
+.card-type-btn:hover{border-color:var(--sage-mid);background:var(--sage-light);}
+.card-type-btn.selected{border-color:var(--sage);background:var(--sage-light);box-shadow:0 0 0 2px var(--sage-mid);}
+.card-type-icon{font-size:22px;margin-bottom:8px;}
+.card-type-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.card-type-desc{font-size:12px;color:var(--text-mid);}
+
+.record-form{display:none;}
+.record-form.active{display:block;}
+
+/* Record history */
+.record-item{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--warm-mid);}
+.record-item:last-child{border-bottom:none;}
+.record-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:var(--sage-light);}
+.record-content{flex:1;}
+.record-title{font-size:14px;font-weight:500;}
+.record-meta{font-size:12px;color:var(--text-light);margin-top:2px;}
+.record-note{font-size:13px;color:var(--text-mid);margin-top:4px;}
+
+/* VISIT SUMMARY */
+.summary-doc{background:var(--white);border:1px solid var(--warm-mid);border-radius:var(--radius);padding:28px;font-size:13px;line-height:1.8;max-width:720px;}
+.summary-doc h2{font-family:'DM Serif Display',serif;font-size:18px;color:var(--sage-dark);margin-bottom:4px;}
+.summary-doc .summary-meta{font-size:12px;color:var(--text-light);margin-bottom:20px;}
+.summary-section{margin-bottom:18px;}
+.summary-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-light);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--warm-mid);}
+.summary-section p,.summary-section li{color:var(--text);margin-bottom:4px;}
+.summary-section ul{padding-left:18px;}
+
+/* SETTINGS */
+.settings-section{margin-bottom:8px;}
+.profile-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--warm-mid);font-size:14px;}
+.profile-row:last-child{border-bottom:none;}
+.profile-key{color:var(--text-mid);}
+.profile-val{font-weight:500;}
+.backend-toggle{display:flex;gap:12px;margin-bottom:16px;}
+.backend-opt{flex:1;padding:12px 16px;border-radius:var(--radius-sm);border:2px solid var(--warm-mid);cursor:pointer;background:var(--white);font-family:'Nunito',sans-serif;text-align:left;transition:all .2s;}
+.backend-opt.active{border-color:var(--sage);background:var(--sage-light);}
+.backend-opt-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.backend-opt-desc{font-size:12px;color:var(--text-mid);}
+.backend-opt.active .backend-opt-name{color:var(--sage-dark);}
+
+/* UTIL */
+.flex{display:flex;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;}
+.gap-8{gap:8px;}
+.gap-12{gap:12px;}
+.mt-4{margin-top:4px;}
+.mt-8{margin-top:8px;}
+.mt-12{margin-top:12px;}
+.mt-16{margin-top:16px;}
+.text-sm{font-size:13px;}
+.text-light{color:var(--text-light);}
+.text-mid{color:var(--text-mid);}
+.text-sage{color:var(--sage-dark);}
+.font-medium{font-weight:500;}
+.w-full{width:100%;}
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--warm-dark);border-radius:10px;}
+
+/* Checkbox row */
+.check-row{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;}
+.check-row input{width:16px;height:16px;cursor:pointer;accent-color:var(--sage);}
+
+/* ── CHAT SUMMARIZE BUTTON ──────────────────────────────────────────────────── */
+.chat-summarize-bar{display:none;padding:8px 16px 0;background:var(--white);border-top:1px solid var(--warm-mid);}
+.chat-summarize-bar.visible{display:flex;align-items:center;gap:10px;}
+.btn-summarize{background:var(--sage-light);border:1px solid var(--sage-mid);color:var(--sage-dark);font-size:13px;padding:7px 14px;border-radius:20px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s;}
+.btn-summarize:hover{background:var(--sage-mid);color:white;}
+.btn-summarize svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+.chat-summarize-hint{font-size:12px;color:var(--text-light);}
+
+/* Chat summary card (AI-generated recap inline in chat) */
+.chat-summary-card{background:var(--white);border:2px solid var(--sage);border-radius:var(--radius);padding:16px;margin-top:10px;width:100%;}
+.chat-summary-card h4{font-family:'DM Serif Display',serif;font-size:14px;color:var(--sage-dark);margin-bottom:8px;}
+.chat-summary-card p,.chat-summary-card li{font-size:13px;color:var(--text);line-height:1.6;}
+.chat-summary-card ul{padding-left:16px;margin:4px 0;}
+.chat-summary-card strong{color:var(--text);}
+.summary-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+
+/* ── SPECIALTY SELECTOR ─────────────────────────────────────────────────────── */
+.specialty-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.specialty-btn{background:var(--white);border:1.5px solid var(--warm-mid);border-radius:var(--radius-sm);padding:12px 10px;cursor:pointer;text-align:center;font-family:'Nunito',sans-serif;transition:all .2s;}
+.specialty-btn:hover{border-color:var(--sage-mid);background:var(--sage-light);}
+.specialty-btn.active{border-color:var(--sage);background:var(--sage-light);box-shadow:0 0 0 2px var(--sage-mid);}
+.specialty-icon{font-size:22px;margin-bottom:4px;}
+.specialty-name{font-size:12px;font-weight:600;color:var(--text);}
+
+/* Editable summary */
+.summary-editable{width:100%;min-height:300px;padding:20px;border:1px solid var(--warm-mid);border-radius:var(--radius);font-family:'Nunito',sans-serif;font-size:13px;line-height:1.8;color:var(--text);background:var(--white);resize:vertical;}
+.summary-editable:focus{outline:none;border-color:var(--sage-mid);}
+.edit-hint{font-size:11px;color:var(--text-light);margin-bottom:6px;}
+
+/* ── MOBILE NAV BAR ─────────────────────────────────────────────────────────── */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#f8f6f0;border-top:1px solid var(--warm-mid);z-index:200;padding:0 8px;padding-bottom:env(safe-area-inset-bottom);}
+.mobile-nav-inner{display:flex;justify-content:space-around;align-items:center;height:56px;}
+.mobile-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;border:none;background:transparent;cursor:pointer;color:var(--text-light);font-family:'Nunito',sans-serif;font-size:10px;font-weight:500;border-radius:8px;transition:all .2s;min-width:56px;}
+.mobile-nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.mobile-nav-btn.active{color:var(--sage-dark);}
+.mobile-nav-btn.active svg{stroke:var(--sage);}
+.mobile-nav-btn span{font-size:10px;}
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  /* Hide desktop sidebar, show mobile nav */
+  .sidebar{display:none;}
+  .mobile-nav{display:flex;}
+
+  /* Layout adjustments */
+  .app-body{padding:0 12px;padding-bottom:64px;}
+  .main{padding:16px 0 16px 0;}
+  .topbar{padding:0 16px;}
+
+  /* Chat fills screen height properly on mobile */
+  .chat-wrap{height:calc(100dvh - 170px);}
+
+  /* Stack form rows */
+  .form-row{grid-template-columns:1fr;}
+  .dash-grid{grid-template-columns:1fr 1fr;}
+  .dash-info-grid{grid-template-columns:1fr;}
+  .card-type-grid{grid-template-columns:1fr;}
+  .backend-toggle{flex-direction:column;}
+
+  /* Larger touch targets */
+  .btn{padding:10px 18px;}
+  .chip{padding:7px 14px;font-size:13px;}
+  .nav-item{padding:12px 14px;}
+  .form-input,.form-select,.form-textarea{font-size:16px;} /* prevents iOS zoom */
+
+  /* Full-width record draft card */
+  .record-draft{max-width:100%;}
+
+  /* Hide page header subtitle on small screens */
+  .page-header p{display:none;}
+
+  /* Summary doc readable on phone */
+  .summary-doc{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 5c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm3 10H9v-1c0-1.7 2.3-2.5 3-2.5s3 .8 3 2.5v1z"/></svg>
+    </div>
+    ComCare
+  </div>
+  <div class="topbar-right">
+    <div class="backend-badge" id="backend-badge">
+      <span class="backend-dot"></span>
+      <span id="backend-label">Ollama</span>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="lang-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="lang-es" onclick="setLang('es')">ES</button>
+    </div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-primary-label">Primary</div>
+    <button class="nav-item active" onclick="nav('chat')" id="nav-chat">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+      <span id="nav-chat-label">AI Chat</span>
+    </button>
+    <div class="separator"></div>
+    <div class="nav-section-label">Pages</div>
+    <button class="nav-item" onclick="nav('dashboard')" id="nav-dashboard">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+      <span id="nav-dashboard-label">Home Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="nav('record')" id="nav-record">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2M9 3a2 2 0 002 2h2a2 2 0 002-2M9 3a2 2 0 012-2h2a2 2 0 012 2"/></svg></span>
+      <span id="nav-record-label">Enter a Record</span>
+    </button>
+    <button class="nav-item" onclick="nav('summary')" id="nav-summary">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+      <span id="nav-summary-label">Visit Summary</span>
+    </button>
+    <div class="separator"></div>
+    <button class="nav-item" onclick="nav('settings')" id="nav-settings">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+      <span id="nav-settings-label">Settings</span>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── AI CHAT (primary) ── -->
+    <div class="page active" id="page-chat">
+      <div class="page-header">
+        <h1 id="chat-title">AI Chat</h1>
+        <p id="chat-sub">Talk naturally — ComCare listens and helps you track what matters</p>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages">
+          <div class="msg ai">
+            <div class="msg-avatar ai">CC</div>
+            <div>
+              <div class="msg-bubble" id="welcome-msg">Hello! I'm ComCare. Tell me how things are going — I'll listen, ask a few questions if needed, and help you save important observations for your next doctor visit.</div>
+              <div class="msg-time">Just now</div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div class="suggested-chips" id="chips">
+            <button class="chip" onclick="sendChip(this)" id="chip1">She's been more confused in the evenings</button>
+            <button class="chip" onclick="sendChip(this)" id="chip2">He had a near fall today</button>
+            <button class="chip" onclick="sendChip(this)" id="chip3">Question about her medication</button>
+            <button class="chip" onclick="sendChip(this)" id="chip4">Help me prepare for the visit</button>
+          </div>
+          <div class="chat-summarize-bar" id="summarize-bar">
+            <button class="btn-summarize" onclick="summarizeChat()">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Summarize our chat
+            </button>
+            <span class="chat-summarize-hint">Re-summarize if you've added more since the last summary</span>
+          </div>
+          <div class="chat-input-row">
+            <textarea class="chat-input" id="chat-input" rows="1" placeholder="Message ComCare…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+            <button class="chat-send" onclick="sendMessage()">
+              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HOME DASHBOARD ── -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <h1 id="dash-title">Home Dashboard</h1>
+        <p id="dash-sub">Loading…</p>
+      </div>
+      <div class="dash-info-grid">
+        <div class="info-card highlight">
+          <div class="info-card-label">💊 Medication tracking today</div>
+          <div class="info-card-value" id="dash-med">Loading…</div>
+          <div class="info-card-sub" id="dash-med-sub"></div>
+        </div>
+        <div class="info-card highlight">
+          <div class="info-card-label">📅 Next visit</div>
+          <div class="info-card-value" id="dash-visit">Loading…</div>
+          <div class="info-card-sub" id="dash-visit-sub"></div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">📋 Recent care notes</div>
+          <div class="info-card-value" id="dash-notes">No records yet</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-label">❓ Things to ask at the visit</div>
+          <div class="info-card-value" id="dash-questions">Add visit questions via Enter a Record</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Pending Coordination Tasks
+        </div>
+        <div id="dash-pending-tasks">
+          <div class="text-mid text-sm" style="padding:12px 0;">No pending tasks — nice work.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Recent Saved Records
+        </div>
+        <div id="dash-records-list">
+          <div class="text-mid text-sm" style="padding:12px 0;">No records saved yet. Use <strong>AI Chat</strong> or <strong>Enter a Record</strong> to start tracking observations.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ENTER A RECORD ── -->
+    <div class="page" id="page-record">
+      <div class="page-header">
+        <h1 id="rec-title">Enter a Record</h1>
+        <p id="rec-sub">Choose a record type and fill in the details</p>
+      </div>
+
+      <!-- Step 1: Card type selection -->
+      <div id="rec-step-1">
+        <div class="card">
+          <div class="card-title">Choose a record type</div>
+          <div class="card-type-grid">
+            <button class="card-type-btn" onclick="selectCard('care_change')" id="ctype-care_change">
+              <div class="card-type-icon">🔄</div>
+              <div class="card-type-name">Care Change</div>
+              <div class="card-type-desc">New or changed health, behavior, function, sleep, or safety observation</div>
+            </button>
+            <button class="card-type-btn" onclick="selectCard('medication')" id="ctype-medication">
+              <div class="card-type-icon">💊</div>
+              <div class="card-type-name">Medication / Treatment Question</div>
+              <div class="card-type-desc">Questions, worries, or confusion about medications or instructions</div>
+            </button>
+            <button class="card-type-btn" onclick="selectCard('coordination')" id="ctype-coordination">
+              <div class="card-type-icon">📋</div>
+              <div class="card-type-name">Care Coordination Task</div>
+              <div class="card-type-desc">Follow-up tasks, who handles them, due dates, and status</div>
+            </button>
+            <button class="card-type-btn" onclick="selectCard('visit_priority')" id="ctype-visit_priority">
+              <div class="card-type-icon">🏥</div>
+              <div class="card-type-name">Visit Question / Priority</div>
+              <div class="card-type-desc">Questions or priorities to discuss at the next clinical visit</div>
+            </button>
+            <button class="card-type-btn" onclick="selectCard('caregiver_support')" id="ctype-caregiver_support">
+              <div class="card-type-icon">🤝</div>
+              <div class="card-type-name">Caregiver Support Need</div>
+              <div class="card-type-desc">Capacity challenges, barriers, and resources needed</div>
+            </button>
+            <button class="card-type-btn" onclick="selectCard('what_matters')" id="ctype-what_matters">
+              <div class="card-type-icon">❤️</div>
+              <div class="card-type-name">What Matters / Preference</div>
+              <div class="card-type-desc">Routines, strengths, preferences, and personhood context</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Record forms (shown after selection) -->
+      <div id="rec-step-2" class="hidden">
+        <div class="flex-between" style="margin-bottom:16px;">
+          <div style="font-size:14px;color:var(--text-mid);">
+            <span id="rec-breadcrumb"></span>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="backToCardTypes()">← Change type</button>
+        </div>
+
+        <!-- 1. Care Change -->
+        <div class="record-form card" id="form-care_change">
+          <div class="card-title">🔄 Care Change</div>
+          <div class="form-group">
+            <label class="form-label">Changed / noticed?</label>
+            <textarea class="form-textarea" id="cc-description" placeholder="Describe the change in health, behavior, function, sleep, eating, or safety…"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First noticed</label>
+              <input type="date" class="form-input" id="cc-date"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Frequency</label>
+              <select class="form-select" id="cc-frequency">
+                <option value="">Select…</option>
+                <option>Once</option><option>Several times</option><option>Daily</option><option>Getting worse</option><option>Unsure</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Stress / severity</label>
+              <select class="form-select" id="cc-severity">
+                <option value="">Select…</option>
+                <option>Mild</option><option>Moderate</option><option>Severe</option><option>Unsure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reporter</label>
+              <select class="form-select" id="cc-reporter">
+                <option value="">Select…</option>
+                <option>Observed by me</option><option>PLWD reported</option><option>Other person</option><option>Concern / unsure</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">AI tags (auto-detected category)</label>
+              <select class="form-select" id="cc-tag">
+                <option value="">Select…</option>
+                <option>Health</option><option>Behavior</option><option>Function</option><option>Sleep / Eating</option><option>Safety</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Related medication (optional)</label>
+              <input class="form-input" id="cc-related-medication" placeholder="e.g. Donepezil"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="check-row"><input type="checkbox" id="cc-sensitive"/> Sensitive — needs careful handling</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visible to</label>
+              <select class="form-select" id="cc-visibility">
+                <option>Caregiver only</option><option>Clinician</option><option>Family</option><option>PLWD review</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="cc-notes" placeholder="Any additional context…"></textarea>
+          </div>
+          <div class="flex gap-8 mt-12">
+            <button class="btn btn-primary" onclick="saveRecord('care_change')">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Record
+            </button>
+            <button class="btn btn-ghost" onclick="backToCardTypes()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- 2. Medication -->
+        <div class="record-form card" id="form-medication">
+          <div class="card-title">💊 Medication / Treatment Question</div>
+          <div class="form-group">
+            <label class="form-label">Medication or treatment</label>
+            <input class="form-input" id="med-name" placeholder="Name or instruction…"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Concern — what is confusing or worrying?</label>
+            <textarea class="form-textarea" id="med-concern" placeholder="Describe the question or concern…"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First noticed</label>
+              <input type="date" class="form-input" id="med-date"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Source</label>
+              <select class="form-select" id="med-source">
+                <option value="">Select…</option>
+                <option>PCP</option><option>Neurologist</option><option>Specialist</option><option>Pharmacist</option><option>Hospital</option><option>Family</option><option>Unsure</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Question to ask clinician or pharmacist</label>
+            <textarea class="form-textarea" id="med-question" placeholder="What do you want to ask?"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Reporter</label>
+              <select class="form-select" id="med-reporter">
+                <option value="">Select…</option>
+                <option>Observed by me</option><option>PLWD reported</option><option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visible to</label>
+              <select class="form-select" id="med-visibility">
+                <option>Caregiver only</option><option>Clinician</option><option>Family</option><option>PLWD review</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="check-row"><input type="checkbox" id="med-sensitive"/> Sensitive — needs careful handling</label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="med-notes"></textarea>
+          </div>
+          <div class="flex gap-8 mt-12">
+            <button class="btn btn-primary" onclick="saveRecord('medication')">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Record
+            </button>
+            <button class="btn btn-ghost" onclick="backToCardTypes()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- 3. Coordination -->
+        <div class="record-form card" id="form-coordination">
+          <div class="card-title">📋 Care Coordination Task</div>
+          <div class="form-group">
+            <label class="form-label">Follow-up item — what needs handling?</label>
+            <textarea class="form-textarea" id="coord-item" placeholder="Describe the task…"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Responsible</label>
+              <select class="form-select" id="coord-responsible">
+                <option value="">Select…</option>
+                <option>Me</option><option>PCP</option><option>Specialist</option><option>Pharmacist</option><option>Insurer</option><option>Family</option><option>Agency</option><option>Unsure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Due date</label>
+              <input type="date" class="form-input" id="coord-due"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select class="form-select" id="coord-status">
+                <option>Needs action</option><option>Waiting</option><option>Overdue</option><option>Done</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Importance</label>
+              <select class="form-select" id="coord-importance">
+                <option>Low</option><option>Medium</option><option>High</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="check-row"><input type="checkbox" id="coord-sensitive"/> Sensitive — needs careful handling</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visible to</label>
+              <select class="form-select" id="coord-visibility">
+                <option>Caregiver only</option><option>Clinician</option><option>Family</option><option>PLWD review</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="coord-notes"></textarea>
+          </div>
+          <div class="flex gap-8 mt-12">
+            <button class="btn btn-primary" onclick="saveRecord('coordination')">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Record
+            </button>
+            <button class="btn btn-ghost" onclick="backToCardTypes()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- 4. Visit Priority -->
+        <div class="record-form card" id="form-visit_priority">
+          <div class="card-title">🏥 Visit Question / Priority</div>
+          <div class="form-group">
+            <label class="form-label">Ask / discuss — main question or priority</label>
+            <textarea class="form-textarea" id="vp-question" placeholder="What do you want to discuss at the visit?"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Why now? — reason this matters</label>
+            <textarea class="form-textarea" id="vp-why" placeholder="Why is this a priority?"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Priority level</label>
+              <select class="form-select" id="vp-priority">
+                <option>Top concern</option><option>If time allows</option><option>Later</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">AI topic</label>
+              <select class="form-select" id="vp-topic">
+                <option value="">Select…</option>
+                <option>Planning</option><option>Safety</option><option>Services</option><option>Family comms</option><option>Future planning</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Discuss with PLWD?</label>
+              <select class="form-select" id="vp-plwd">
+                <option>Yes</option><option>No</option><option>Unsure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visible to</label>
+              <select class="form-select" id="vp-visibility">
+                <option>Caregiver only</option><option>Family</option><option>PLWD review</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="check-row"><input type="checkbox" id="vp-sensitive"/> Sensitive — needs careful handling</label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="vp-notes"></textarea>
+          </div>
+          <div class="flex gap-8 mt-12">
+            <button class="btn btn-primary" onclick="saveRecord('visit_priority')">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Record
+            </button>
+            <button class="btn btn-ghost" onclick="backToCardTypes()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- 5. Caregiver Support -->
+        <div class="record-form card" id="form-caregiver_support">
+          <div class="card-title">🤝 Caregiver Support Need</div>
+          <div class="form-group">
+            <label class="form-label">Challenge — what is hard right now?</label>
+            <textarea class="form-textarea" id="cs-challenge" placeholder="Describe the challenge or support need…"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Impact</label>
+              <select class="form-select" id="cs-impact">
+                <option>A little</option><option>Somewhat</option><option>A lot</option><option>Unsure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Type of help needed</label>
+              <select class="form-select" id="cs-help">
+                <option value="">Select…</option>
+                <option>Emotional</option><option>Practical</option><option>Skills / training</option><option>Family support</option><option>Services</option><option>Legal / financial</option><option>Unsure</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="check-row"><input type="checkbox" id="cs-sensitive"/> Sensitive — needs careful handling</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visible to</label>
+              <select class="form-select" id="cs-visibility">
+                <option>Caregiver only</option><option>Clinician</option><option>Family</option><option>PLWD review</option>
+              </select>
+            </div>
+          </div>
+          <p class="form-hint">Defaults to "Caregiver only" — your own reflections aren't shared with clinicians unless you choose to.</p>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="cs-notes"></textarea>
+          </div>
+          <div class="flex gap-8 mt-12">
+            <button class="btn btn-primary" onclick="saveRecord('caregiver_support')">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Record
+            </button>
+            <button class="btn btn-ghost" onclick="backToCardTypes()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- 6. What Matters -->
+        <div class="record-form card" id="form-what_matters">
+          <div class="card-title">❤️ What Matters / Preference</div>
+          <div class="form-group">
+            <label class="form-label">Remember about this person</label>
+            <textarea class="form-textarea" id="wm-description" placeholder="Routine, preference, strength, or what matters to them…"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Perspective</label>
+              <select class="form-select" id="wm-perspective">
+                <option>PLWD</option><option>Caregiver</option><option>Shared</option><option>Unsure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">When relevant</label>
+              <select class="form-select" id="wm-when">
+                <option value="">Select…</option>
+                <option>Morning</option><option>Daytime</option><option>Evening</option><option>Night</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Scenario</label>
+              <select class="form-select" id="wm-scenario">
+                <option value="">Select…</option>
+                <option>Meals</option><option>Personal care</option><option>Leaving home</option><option>Visits</option><option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">AI tag</label>
+              <select class="form-select" id="wm-tag">
+                <option value="">Select…</option>
+                <option>Comfort</option><option>Safety</option><option>Routine</option><option>Preference</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="check-row"><input type="checkbox" id="wm-sensitive"/> Sensitive — needs careful handling</label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visible to</label>
+              <select class="form-select" id="wm-visibility">
+                <option>Caregiver only</option><option>Clinician</option><option>Family</option><option>PLWD review</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="wm-notes"></textarea>
+          </div>
+          <div class="flex gap-8 mt-12">
+            <button class="btn btn-primary" onclick="saveRecord('what_matters')">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Record
+            </button>
+            <button class="btn btn-ghost" onclick="backToCardTypes()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Record history -->
+      <div class="card" id="rec-history-card">
+        <div class="card-title">Saved Records</div>
+        <div id="rec-history-list">
+          <div class="text-mid text-sm" style="padding:12px 0;">No records yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VISIT SUMMARY ── -->
+    <div class="page" id="page-summary">
+      <div class="page-header">
+        <h1 id="sum-title">Visit Summary</h1>
+        <p id="sum-sub">Generate a tailored summary for your upcoming appointment</p>
+      </div>
+
+      <!-- Step 0: Audience — a clinician visit and a caregiver handoff need different content (DR7.2) -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          Who is this for?
+        </div>
+        <div class="backend-toggle">
+          <button class="backend-opt active" id="aud-clinician" onclick="selectAudience('clinician')">
+            <div class="backend-opt-name">🏥 A clinical visit</div>
+            <div class="backend-opt-desc">A summary to share with a doctor or specialist</div>
+          </button>
+          <button class="backend-opt" id="aud-handoff" onclick="selectAudience('handoff')">
+            <div class="backend-opt-name">🤝 A caregiver handoff</div>
+            <div class="backend-opt-desc">Notes for a family member, friend, or paid caregiver stepping in</div>
+          </button>
+        </div>
+        <div class="form-group hidden" id="handoff-recipient-wrap">
+          <label class="form-label">Who is receiving this?</label>
+          <input type="text" class="form-input" id="sum-handoff-recipient" placeholder="e.g. My sister, covering this weekend"/>
+        </div>
+      </div>
+
+      <!-- Step 1: Specialty (clinician visits only) -->
+      <div class="card" id="specialty-card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Which specialty are you visiting?
+        </div>
+        <div class="specialty-grid">
+          <button class="specialty-btn" data-specialty="Neurology" onclick="selectSpecialty(this)">
+            <div class="specialty-icon">🧠</div>
+            <div class="specialty-name">Neurology</div>
+          </button>
+          <button class="specialty-btn" data-specialty="Cardiology" onclick="selectSpecialty(this)">
+            <div class="specialty-icon">❤️</div>
+            <div class="specialty-name">Cardiology</div>
+          </button>
+          <button class="specialty-btn" data-specialty="Primary Care" onclick="selectSpecialty(this)">
+            <div class="specialty-icon">🏥</div>
+            <div class="specialty-name">Primary Care</div>
+          </button>
+          <button class="specialty-btn" data-specialty="Physical Therapy" onclick="selectSpecialty(this)">
+            <div class="specialty-icon">🦵</div>
+            <div class="specialty-name">Physical Therapy</div>
+          </button>
+          <button class="specialty-btn" data-specialty="Pharmacy / Medication Review" onclick="selectSpecialty(this)">
+            <div class="specialty-icon">💊</div>
+            <div class="specialty-name">Pharmacy / Meds</div>
+          </button>
+          <button class="specialty-btn" data-specialty="Social Work / Care Coordination" onclick="selectSpecialty(this)">
+            <div class="specialty-icon">🤝</div>
+            <div class="specialty-name">Social Work</div>
+          </button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Other / custom specialty</label>
+          <input type="text" class="form-input" id="sum-specialty-custom" placeholder="e.g. Geriatrics, Oncology…" oninput="clearSpecialtyGrid()"/>
+        </div>
+      </div>
+
+      <!-- Step 2: Visit details -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Visit details
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purpose of this visit</label>
+          <input type="text" class="form-input" id="sum-purpose" placeholder="e.g. Follow-up on memory decline, review fall risk, adjust medications"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date range</label>
+            <input type="text" class="form-input" id="sum-range" placeholder="e.g. June 1 – June 19, 2026"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Concerns to highlight</label>
+            <input type="text" class="form-input" id="sum-concerns" placeholder="e.g. Gait instability, evening confusion"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Questions for the provider</label>
+          <textarea class="form-textarea" id="sum-questions" placeholder="e.g. Should we adjust Donepezil? Is PT an option?" style="min-height:60px;"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="generateSummary()" id="sum-gen-btn">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Generate Summary
+        </button>
+      </div>
+
+      <!-- Output (editable) -->
+      <div id="sum-output" class="hidden">
+        <div class="flex-between" style="margin-bottom:8px;">
+          <div class="text-sm text-mid" id="sum-generated-at"></div>
+          <div class="flex gap-8">
+            <button class="btn btn-outline btn-sm" onclick="copyReport()">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="downloadReport()">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download
+            </button>
+          </div>
+        </div>
+        <p class="edit-hint">✏️ You can edit the summary directly below before copying or downloading.</p>
+        <textarea class="summary-editable" id="sum-editable" spellcheck="true"></textarea>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h1 id="set-title">Settings</h1>
+        <p id="set-sub">Configure ComCare for your family</p>
+      </div>
+
+      <!-- AI Backend -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          AI Backend
+        </div>
+        <div class="backend-toggle">
+          <button class="backend-opt active" id="be-ollama" onclick="selectBackend('ollama')">
+            <div class="backend-opt-name">🦙 Ollama (Local)</div>
+            <div class="backend-opt-desc">Private, runs on your machine. No data leaves.</div>
+          </button>
+          <button class="backend-opt" id="be-openai" onclick="selectBackend('openai')">
+            <div class="backend-opt-name">🤖 OpenAI</div>
+            <div class="backend-opt-desc">Cloud GPT models. Requires your OpenAI API key.</div>
+          </button>
+          <button class="backend-opt" id="be-azure" onclick="selectBackend('azure')">
+            <div class="backend-opt-name">☁️ Azure OpenAI</div>
+            <div class="backend-opt-desc">Cloud GPT-4o. Requires endpoint + API key.</div>
+          </button>
+        </div>
+
+        <!-- Ollama config -->
+        <div id="ollama-config">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ollama URL</label>
+              <input class="form-input" id="s-ollama-url" placeholder="http://localhost:11434"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model</label>
+              <input class="form-input" id="s-ollama-model" placeholder="llama3.1:latest"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenAI config -->
+        <div id="openai-config" class="hidden">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">OpenAI API Key</label>
+              <input type="password" class="form-input" id="s-openai-key" placeholder="sk-…"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model</label>
+              <input class="form-input" id="s-openai-model" placeholder="gpt-4o-mini"/>
+            </div>
+          </div>
+          <p class="form-hint">Your key is stored only in comcare.db on this computer and sent directly to OpenAI's API.</p>
+        </div>
+
+        <!-- Azure config -->
+        <div id="azure-config" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Azure OpenAI Endpoint</label>
+            <input class="form-input" id="s-azure-endpoint" placeholder="https://your-resource.openai.azure.com"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">API Key</label>
+              <input type="password" class="form-input" id="s-azure-key" placeholder="••••••••"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Deployment name</label>
+              <input class="form-input" id="s-azure-deployment" placeholder="gpt-4o"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-8 mt-12">
+          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+          <button class="btn btn-outline" onclick="testConnection()">Test Connection</button>
+        </div>
+        <div id="set-test-result" class="hidden mt-8"></div>
+      </div>
+
+      <!-- Patient Profile -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Patient Profile
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Patient name</label>
+            <input class="form-input" id="s-patient-name"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Age</label>
+            <input class="form-input" id="s-patient-age" type="number"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diagnosis</label>
+          <input class="form-input" id="s-patient-diagnosis"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primary physician</label>
+            <input class="form-input" id="s-patient-physician"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Next appointment</label>
+            <input type="date" class="form-input" id="s-patient-next-visit"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()">Save Profile</button>
+      </div>
+
+      <!-- Language -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+          Language / Idioma
+        </div>
+        <select class="form-select" style="max-width:200px;" id="set-lang-select" onchange="setLang(this.value)">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+        </select>
+        <p class="form-hint mt-8">This currently switches the app's interface labels. The AI chat itself replies in whatever language you write in, but full Spanish-language conversation support is still being tested.</p>
+      </div>
+
+      <!-- Accessibility -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Accessibility
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">Text entry &amp; correction</span>
+          <span class="profile-val">✓ Supported — type, edit, and correct any draft before saving</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">Voice input</span>
+          <span class="profile-val text-light">Not yet available</span>
+        </div>
+        <div class="profile-row">
+          <span class="profile-key">Read-aloud</span>
+          <span class="profile-val text-light">Not yet available</span>
+        </div>
+        <p class="form-hint mt-8">We're telling you plainly what's supported today rather than leaving it to guesswork — voice input and read-aloud are planned but not built yet.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-btn active" id="mnav-chat" onclick="nav('chat')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span>Chat</span>
+    </button>
+    <button class="mobile-nav-btn" id="mnav-dashboard" onclick="nav('dashboard')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="mobile-nav-btn" id="mnav-record" onclick="nav('record')">
+      <svg viewBox="0 0 24 24"><path d="M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2M9 3a2 2 0 002 2h2a2 2 0 002-2M9 3a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <span>Record</span>
+    </button>
+    <button class="mobile-nav-btn" id="mnav-summary" onclick="nav('summary')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Summary</span>
+    </button>
+    <button class="mobile-nav-btn" id="mnav-settings" onclick="nav('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </div>
+</nav>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+const API = '';  // relative — backend serves this file
+let lang = 'en';
+let chatHistory = [];
+let sessionId = 'session-' + Date.now();
+let selectedCardType = null;
+let savedRecords = [];
+let summaryText = '';
+let patientSettings = {};
+
+const CARD_LABELS = {
+  care_change: 'Care Change',
+  medication: 'Medication / Treatment Question',
+  coordination: 'Care Coordination Task',
+  visit_priority: 'Visit Question / Priority',
+  caregiver_support: 'Caregiver Support Need',
+  what_matters: 'What Matters / Preference',
+};
+const CARD_ICONS = {
+  care_change:'🔄', medication:'💊', coordination:'📋',
+  visit_priority:'🏥', caregiver_support:'🤝', what_matters:'❤️',
+};
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const sideBtn = document.getElementById('nav-' + page);
+  if (sideBtn) sideBtn.classList.add('active');
+  const mobileBtn = document.getElementById('mnav-' + page);
+  if (mobileBtn) mobileBtn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'record') loadRecordHistory();
+  if (page === 'settings') loadSettings();
+}
+
+// ── Language ───────────────────────────────────────────────────────────────────
+function setLang(l) {
+  lang = l;
+  document.getElementById('lang-en').className = 'lang-btn' + (l==='en'?' active':'');
+  document.getElementById('lang-es').className = 'lang-btn' + (l==='es'?' active':'');
+  document.getElementById('set-lang-select').value = l;
+  if (l === 'es') {
+    document.getElementById('chat-title').textContent = 'Chat con IA';
+    document.getElementById('chat-sub').textContent = 'Hable naturalmente — ComCare escucha y ayuda a registrar lo que importa';
+    document.getElementById('welcome-msg').textContent = '¡Hola! Soy ComCare. Cuénteme cómo van las cosas — escucho, hago algunas preguntas si es necesario y le ayudo a guardar observaciones importantes para la próxima visita médica.';
+    document.getElementById('nav-chat-label').textContent = 'Chat IA';
+    document.getElementById('nav-dashboard-label').textContent = 'Inicio';
+    document.getElementById('nav-record-label').textContent = 'Registrar';
+    document.getElementById('nav-summary-label').textContent = 'Resumen de Visita';
+    document.getElementById('nav-settings-label').textContent = 'Configuración';
+    document.getElementById('chat-input').placeholder = 'Mensaje a ComCare…';
+  } else {
+    document.getElementById('chat-title').textContent = 'AI Chat';
+    document.getElementById('chat-sub').textContent = 'Talk naturally — ComCare listens and helps you track what matters';
+    document.getElementById('nav-chat-label').textContent = 'AI Chat';
+    document.getElementById('nav-dashboard-label').textContent = 'Home Dashboard';
+    document.getElementById('nav-record-label').textContent = 'Enter a Record';
+    document.getElementById('nav-summary-label').textContent = 'Visit Summary';
+    document.getElementById('nav-settings-label').textContent = 'Settings';
+    document.getElementById('chat-input').placeholder = 'Message ComCare…';
+  }
+}
+
+// ── Chat ───────────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  document.getElementById('chips').style.display = 'none';
+  appendMsg('user', text);
+  const typing = appendTyping();
+  chatHistory.push({role: 'user', content: text});
+
+  try {
+    const res = await fetch(API + '/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({messages: chatHistory, session_id: sessionId})
+    });
+    const data = await res.json();
+    typing.remove();
+    const reply = data.reply || 'Sorry, no response received.';
+    chatHistory.push({role:'assistant', content: reply});
+    renderAIReply(reply, !!data.red_flag);
+
+    const rounds = Math.floor(chatHistory.length / 2);
+    const bar = document.getElementById('summarize-bar');
+
+    if (rounds === 3) {
+      // Auto-summarize after exactly 3 full rounds — give the reply a moment to render
+      bar.classList.add('visible');
+      setTimeout(() => summarizeChat(), 1200);
+    } else if (rounds > 3) {
+      // Keep the button available for re-summarizing in longer conversations
+      bar.classList.add('visible');
+    }
+  } catch(e) {
+    typing.remove();
+    appendMsg('ai', 'Connection error. Make sure the ComCare server is running: `python app.py`');
+  }
+}
+
+function renderAIReply(rawReply, isRedFlag) {
+  // Extract <<<RECORD>>>...<<<END>>> block
+  const recMatch = rawReply.match(/<<<RECORD>>>([\s\S]*?)<<<END>>>/);
+  let display = rawReply;
+  let suggestion = null;
+  if (recMatch) {
+    try {
+      suggestion = JSON.parse(recMatch[1].trim());
+      display = rawReply.replace(/<<<RECORD>>>[\s\S]*?<<<END>>>/, '').trim();
+    } catch(e) {
+      // fallback: strip the markers even if JSON is malformed
+      display = rawReply.replace(/<<<RECORD>>>[\s\S]*?<<<END>>>/, '').trim();
+    }
+  }
+  // Also handle old-style inline JSON (backward compat)
+  if (!suggestion) {
+    const jsonMatch = display.match(/\{"suggest_record":\s*true[\s\S]*?\}/);
+    if (jsonMatch) {
+      try { suggestion = JSON.parse(jsonMatch[0]); display = display.replace(jsonMatch[0],'').trim(); } catch(e){}
+    }
+  }
+
+  const bubble = appendMsg('ai', display);
+  if (isRedFlag) {
+    const b = bubble.querySelector('.msg-bubble');
+    if (b) b.classList.add('msg-urgent');
+  }
+  if (suggestion && suggestion.suggest_record) {
+    bubble.querySelector('.msg-bubble').appendChild(buildDraftCard(suggestion));
+  }
+  addExplainLink(bubble, display);
+}
+
+// Shared trailing fields appended to every card type so the caregiver can always review/adjust
+// sensitivity and who this should be visible to before confirming (DR6.1 / DR6.3).
+const PRIVACY_FIELDS = [
+  ['sensitive','Sensitive — needs careful handling','checkbox'],
+  ['visibility','Visible to','select',['Caregiver only','Clinician','Family','PLWD review']],
+];
+
+// Field definitions per card type: [fieldKey, label, inputType, options?]
+const DRAFT_FIELDS = {
+  care_change: [
+    ['description','What changed','textarea'],
+    ['first_noticed','First noticed','date'],
+    ['frequency','Frequency','select',['Once','Several times','Daily','Getting worse','Unsure']],
+    ['severity','Severity','select',['Mild','Moderate','Severe','Unsure']],
+    ['tag','Category','select',['Health','Behavior','Function','Sleep / Eating','Safety']],
+    ['related_medication','Related medication','text'],
+    ['notes','Notes','textarea'],
+    ...PRIVACY_FIELDS,
+  ],
+  medication: [
+    ['medication_name','Medication','text'],
+    ['concern','Concern','textarea'],
+    ['first_noticed','First noticed','date'],
+    ['question','Question for clinician','textarea'],
+    ['source','Source','select',['PCP','Neurologist','Specialist','Pharmacist','Hospital','Family','Unsure']],
+    ['notes','Notes','textarea'],
+    ...PRIVACY_FIELDS,
+  ],
+  coordination: [
+    ['follow_up_item','Follow-up item','textarea'],
+    ['responsible','Responsible','select',['Me','PCP','Specialist','Pharmacist','Insurer','Family','Agency','Unsure']],
+    ['due_date','Due date','date'],
+    ['status','Status','select',['Needs action','Waiting','Overdue','Done']],
+    ['importance','Importance','select',['Low','Medium','High']],
+    ['notes','Notes','textarea'],
+    ...PRIVACY_FIELDS,
+  ],
+  visit_priority: [
+    ['question','Ask / discuss','textarea'],
+    ['why_now','Why now','textarea'],
+    ['priority','Priority','select',['Top concern','If time allows','Later','Unsure — ask me']],
+    ['topic','Topic','select',['Planning','Safety','Services','Family comms','Future planning']],
+    ['notes','Notes','textarea'],
+    ...PRIVACY_FIELDS,
+  ],
+  caregiver_support: [
+    ['challenge','Challenge','textarea'],
+    ['impact','Impact','select',['A little','Somewhat','A lot','Unsure']],
+    ['help_type','Help needed','select',['Emotional','Practical','Skills / training','Family support','Services','Legal / financial','Unsure']],
+    ['notes','Notes','textarea'],
+    ...PRIVACY_FIELDS,
+  ],
+  what_matters: [
+    ['description','Remember','textarea'],
+    ['perspective','Perspective','select',['PLWD','Caregiver','Shared','Unsure']],
+    ['when_relevant','When','select',['Morning','Daytime','Evening','Night']],
+    ['scenario','Scenario','select',['Meals','Personal care','Leaving home','Visits','Other']],
+    ['tag','Tag','select',['Comfort','Safety','Routine','Preference']],
+    ['notes','Notes','textarea'],
+    ...PRIVACY_FIELDS,
+  ],
+};
+
+function buildDraftCard(suggestion) {
+  const cardType = suggestion.card_type;
+  const fields = suggestion.fields || {};
+  const draftId = 'draft-' + Date.now();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'record-draft';
+  wrap.id = draftId;
+
+  // Header
+  wrap.innerHTML = `
+    <div class="record-draft-header">
+      <span style="font-size:18px;">${CARD_ICONS[cardType]||'📋'}</span>
+      <span class="record-draft-title">${CARD_LABELS[cardType]||cardType}</span>
+      <span class="record-draft-badge">Draft — review before saving</span>
+    </div>
+    <div class="record-draft-fields" id="${draftId}-fields"></div>
+    <div class="record-draft-actions">
+      <button class="btn btn-primary btn-sm" onclick="confirmDraftSave('${draftId}','${cardType}')">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Confirm & Save
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="discardDraft('${draftId}')">Discard</button>
+    </div>`;
+
+  // Build editable fields
+  const fieldsEl = wrap.querySelector(`#${draftId}-fields`);
+  const defs = DRAFT_FIELDS[cardType] || [];
+  defs.forEach(([key, label, type, opts]) => {
+    let val = fields[key];
+    if (val === undefined || val === null) val = '';
+    // Default visibility: caregiver_support stays private unless the AI explicitly said otherwise (DR8.2);
+    // everything else defaults to "Caregiver only" too, so nothing is shared without an explicit choice.
+    if (key === 'visibility' && !val) val = 'Caregiver only';
+    if (key === 'sensitive' && val === '') val = false;
+    if (!val && type !== 'textarea' && type !== 'text' && type !== 'checkbox') return; // skip empty non-text
+    const row = document.createElement('div');
+    row.className = 'draft-field';
+    let input = '';
+    if (type === 'textarea') {
+      input = `<textarea id="${draftId}-${key}" rows="2">${escHtml(val)}</textarea>`;
+    } else if (type === 'checkbox') {
+      const checked = (val === true || val === 'true');
+      input = `<input type="checkbox" id="${draftId}-${key}" style="width:auto;" ${checked?'checked':''}/>`;
+    } else if (type === 'select' && opts) {
+      const optHtml = opts.map(o => `<option${o===val?' selected':''}>${o}</option>`).join('');
+      input = `<select id="${draftId}-${key}"><option value=""></option>${optHtml}</select>`;
+    } else {
+      input = `<input type="${type}" id="${draftId}-${key}" value="${escHtml(val)}"/>`;
+    }
+    row.innerHTML = `<span class="draft-field-label">${label}</span>${input}`;
+    fieldsEl.appendChild(row);
+  });
+
+  return wrap;
+}
+
+async function confirmDraftSave(draftId, cardType) {
+  // Read values from the inline draft form
+  const defs = DRAFT_FIELDS[cardType] || [];
+  const data = {};
+  defs.forEach(([key, , type]) => {
+    const el = document.getElementById(`${draftId}-${key}`);
+    if (!el) return;
+    data[key] = (type === 'checkbox') ? el.checked : el.value;
+  });
+
+  try {
+    const res = await fetch(API + '/api/records', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({card_type: cardType, data})
+    });
+    if (!res.ok) throw new Error();
+    // Replace draft card with a saved confirmation
+    const draft = document.getElementById(draftId);
+    if (draft) {
+      draft.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--green);font-size:13px;font-weight:600;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        ${CARD_ICONS[cardType]} ${CARD_LABELS[cardType]} saved to records
+      </div>`;
+    }
+    showToast('Record saved ✓');
+  } catch(e) {
+    alert('Error saving — is the backend running?');
+  }
+}
+
+function discardDraft(draftId) {
+  const el = document.getElementById(draftId);
+  if (el) el.remove();
+}
+
+// DR9.1 — optional plain-language explanation of any AI reply, on demand, without changing
+// the original (which keeps its full clinical nuance and safety language).
+function addExplainLink(bubbleWrap, text) {
+  if (!text || text.trim().length < 20) return; // not worth offering for very short replies
+  const bubble = bubbleWrap.querySelector('.msg-bubble');
+  if (!bubble) return;
+  const linkId = 'explain-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+  const link = document.createElement('button');
+  link.className = 'explain-link';
+  link.id = linkId;
+  link.textContent = '🔍 Explain this simply';
+  link.onclick = async () => {
+    link.textContent = 'Explaining…';
+    link.disabled = true;
+    try {
+      const res = await fetch(API + '/api/explain', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({text})
+      });
+      const data = await res.json();
+      const box = document.createElement('div');
+      box.className = 'explain-box';
+      box.textContent = data.explanation || 'Could not generate an explanation.';
+      link.replaceWith(box);
+    } catch(e) {
+      link.textContent = '🔍 Explain this simply';
+      link.disabled = false;
+      alert('Could not reach the backend to explain this.');
+    }
+  };
+  bubble.appendChild(link);
+}
+
+function sendChip(btn) {
+  document.getElementById('chat-input').value = btn.textContent;
+  sendMessage();
+}
+
+function appendMsg(role, text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  div.innerHTML = `
+    <div class="msg-avatar ${role}">${role==='ai'?'CC':'Me'}</div>
+    <div>
+      <div class="msg-bubble">${escHtml(text)}</div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function appendTyping() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.innerHTML = `<div class="msg-avatar ai">CC</div><div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  return div;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ── Enter a Record ─────────────────────────────────────────────────────────────
+function selectCard(type) {
+  selectedCardType = type;
+  document.querySelectorAll('.card-type-btn').forEach(b => b.classList.remove('selected'));
+  const btn = document.getElementById('ctype-' + type);
+  if (btn) btn.classList.add('selected');
+
+  document.getElementById('rec-step-1').classList.add('hidden');
+  document.getElementById('rec-step-2').classList.remove('hidden');
+  document.getElementById('rec-breadcrumb').textContent = CARD_LABELS[type] || type;
+
+  document.querySelectorAll('.record-form').forEach(f => f.classList.remove('active'));
+  const form = document.getElementById('form-' + type);
+  if (form) form.classList.add('active');
+
+  // Set default dates
+  const today = new Date().toISOString().split('T')[0];
+  ['cc-date','med-date','coord-due'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.value) el.value = today;
+  });
+}
+
+function backToCardTypes() {
+  selectedCardType = null;
+  document.getElementById('rec-step-1').classList.remove('hidden');
+  document.getElementById('rec-step-2').classList.add('hidden');
+  document.querySelectorAll('.record-form').forEach(f => f.classList.remove('active'));
+}
+
+function collectRecordData(type) {
+  const g = id => { const el=document.getElementById(id); return el?el.value||'':'' };
+  const gc = id => { const el=document.getElementById(id); return el?el.checked:false };
+  const maps = {
+    care_change: {
+      description: g('cc-description'), first_noticed: g('cc-date'),
+      frequency: g('cc-frequency'), severity: g('cc-severity'),
+      reporter: g('cc-reporter'), tag: g('cc-tag'),
+      related_medication: g('cc-related-medication'),
+      sensitive: gc('cc-sensitive'), visibility: g('cc-visibility'), notes: g('cc-notes'),
+    },
+    medication: {
+      medication_name: g('med-name'), concern: g('med-concern'),
+      first_noticed: g('med-date'), source: g('med-source'),
+      question: g('med-question'), reporter: g('med-reporter'),
+      sensitive: gc('med-sensitive'), visibility: g('med-visibility'), notes: g('med-notes'),
+    },
+    coordination: {
+      follow_up_item: g('coord-item'), responsible: g('coord-responsible'),
+      due_date: g('coord-due'), status: g('coord-status'),
+      importance: g('coord-importance'), sensitive: gc('coord-sensitive'),
+      visibility: g('coord-visibility'), notes: g('coord-notes'),
+    },
+    visit_priority: {
+      question: g('vp-question'), why_now: g('vp-why'),
+      priority: g('vp-priority'), topic: g('vp-topic'),
+      discuss_with_plwd: g('vp-plwd'), sensitive: gc('vp-sensitive'),
+      visibility: g('vp-visibility'), notes: g('vp-notes'),
+    },
+    caregiver_support: {
+      challenge: g('cs-challenge'), impact: g('cs-impact'),
+      help_type: g('cs-help'), sensitive: gc('cs-sensitive'),
+      visibility: g('cs-visibility'), notes: g('cs-notes'),
+    },
+    what_matters: {
+      description: g('wm-description'), perspective: g('wm-perspective'),
+      when_relevant: g('wm-when'), scenario: g('wm-scenario'),
+      tag: g('wm-tag'), sensitive: gc('wm-sensitive'),
+      visibility: g('wm-visibility'), notes: g('wm-notes'),
+    },
+  };
+  return maps[type] || {};
+}
+
+async function saveRecord(type) {
+  const data = collectRecordData(type);
+  const primary = data.description || data.concern || data.follow_up_item ||
+                  data.question || data.challenge || '';
+  if (!primary.trim()) {
+    alert('Please fill in the main description field.');
+    return;
+  }
+  try {
+    const res = await fetch(API + '/api/records', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({card_type: type, data})
+    });
+    if (!res.ok) throw new Error();
+    backToCardTypes();
+    await loadRecordHistory();
+    showToast('Record saved ✓');
+  } catch(e) {
+    alert('Error saving record. Make sure the backend is running.');
+  }
+}
+
+async function loadRecordHistory() {
+  try {
+    const res = await fetch(API + '/api/records');
+    savedRecords = await res.json();
+    renderRecordList(savedRecords, 'rec-history-list');
+  } catch(e) {
+    document.getElementById('rec-history-list').innerHTML =
+      '<div class="text-mid text-sm" style="padding:12px 0;">Could not load records — backend offline?</div>';
+  }
+}
+
+function renderRecordList(records, containerId) {
+  const el = document.getElementById(containerId);
+  if (!records.length) {
+    el.innerHTML = '<div class="text-mid text-sm" style="padding:12px 0;">No records yet.</div>';
+    return;
+  }
+  el.innerHTML = records.slice(0,20).map(r => {
+    const d = r.data;
+    const primary = d.description||d.concern||d.follow_up_item||d.question||d.challenge||'—';
+    const dt = new Date(r.created_at).toLocaleDateString();
+    return `<div class="record-item">
+      <div class="record-avatar">${CARD_ICONS[r.card_type]||'📋'}</div>
+      <div class="record-content">
+        <div class="flex-between">
+          <span class="record-title">${CARD_LABELS[r.card_type]||r.card_type}</span>
+          <span class="tag tag-gray">${dt}</span>
+        </div>
+        <div class="record-note">${escHtml(primary.slice(0,120))}${primary.length>120?'…':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const res = await fetch(API + '/api/dashboard');
+    const d = await res.json();
+
+    document.getElementById('dash-sub').textContent =
+      `${d.patient_name} · ${new Date().toLocaleDateString(lang==='en'?'en-US':'es-MX',{weekday:'long',month:'long',day:'numeric'})}`;
+
+    // Next visit
+    const nv = d.next_visit ? new Date(d.next_visit) : null;
+    document.getElementById('dash-visit').textContent = nv
+      ? nv.toLocaleDateString(lang==='en'?'en-US':'es-MX',{weekday:'short',month:'short',day:'numeric',year:'numeric'})
+      : 'Not set';
+    document.getElementById('dash-visit-sub').textContent =
+      d.patient_physician ? `with ${d.patient_physician}` : '';
+
+    // Records count for medication today (placeholder — backend can expand)
+    document.getElementById('dash-med').textContent = `${d.total_records} record${d.total_records!==1?'s':''} saved`;
+    document.getElementById('dash-med-sub').textContent = 'Use AI Chat or Enter a Record to track observations';
+
+    // Recent care notes
+    const recent = d.recent_records.filter(r => r.card_type === 'care_change');
+    if (recent.length) {
+      document.getElementById('dash-notes').textContent =
+        recent.slice(0,2).map(r => r.data.description||'—').join(' · ');
+    }
+
+    // Things to ask
+    const vp = d.recent_records.filter(r => r.card_type === 'visit_priority');
+    if (vp.length) {
+      document.getElementById('dash-questions').textContent =
+        vp.slice(0,3).map(r => r.data.question||'—').join(' · ');
+    }
+
+    // Recent records list
+    renderRecordList(d.recent_records, 'dash-records-list');
+
+    // Pending coordination tasks (DR7.1) — owner and status stay visible at a glance
+    const pendingEl = document.getElementById('dash-pending-tasks');
+    const pending = d.pending_tasks || [];
+    if (pending.length) {
+      const impColor = {High:'tag-red', Medium:'tag-amber', Low:'tag-gray'};
+      pendingEl.innerHTML = pending.map(t => `
+        <div class="record-item">
+          <div class="record-avatar">📋</div>
+          <div class="record-content">
+            <div class="record-title">${escHtml(t.follow_up_item||'—')}</div>
+            <div class="record-meta">Owner: ${escHtml(t.responsible||'Unsure')}${t.due_date ? ' · Due '+t.due_date : ''}</div>
+          </div>
+          <span class="tag ${impColor[t.importance]||'tag-gray'}">${escHtml(t.status||'Needs action')}</span>
+        </div>`).join('');
+    } else {
+      pendingEl.innerHTML = '<div class="text-mid text-sm" style="padding:12px 0;">No pending tasks — nice work.</div>';
+    }
+
+    // Backend badge
+    updateBackendBadge(d.ai_backend);
+  } catch(e) {
+    document.getElementById('dash-sub').textContent = 'Backend offline — run `uvicorn app:app --reload`';
+  }
+}
+
+function updateBackendBadge(backend) {
+  const badge = document.getElementById('backend-badge');
+  const label = document.getElementById('backend-label');
+  const labels = {azure: 'Azure OpenAI', openai: 'OpenAI'};
+  label.textContent = labels[backend] || 'Ollama (Local)';
+  badge.className = 'backend-badge' + (backend === 'azure' ? ' azure' : backend === 'openai' ? ' openai' : '');
+}
+
+// ── Visit Summary ──────────────────────────────────────────────────────────────
+let selectedSpecialty = '';
+let selectedAudience = 'clinician';
+
+function selectAudience(aud) {
+  selectedAudience = aud;
+  document.getElementById('aud-clinician').className = 'backend-opt' + (aud==='clinician'?' active':'');
+  document.getElementById('aud-handoff').className = 'backend-opt' + (aud==='handoff'?' active':'');
+  document.getElementById('specialty-card').classList.toggle('hidden', aud==='handoff');
+  document.getElementById('handoff-recipient-wrap').classList.toggle('hidden', aud!=='handoff');
+}
+
+function selectSpecialty(btn) {
+  document.querySelectorAll('.specialty-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedSpecialty = btn.dataset.specialty;
+  document.getElementById('sum-specialty-custom').value = '';
+}
+
+function clearSpecialtyGrid() {
+  document.querySelectorAll('.specialty-btn').forEach(b => b.classList.remove('active'));
+  selectedSpecialty = '';
+}
+
+async function generateSummary() {
+  const audience = selectedAudience;
+  const specialty = document.getElementById('sum-specialty-custom').value.trim() || selectedSpecialty || 'Primary Care';
+  const recipient = document.getElementById('sum-handoff-recipient').value.trim();
+  const purpose = document.getElementById('sum-purpose').value.trim();
+  const btn = document.getElementById('sum-gen-btn');
+  btn.textContent = 'Generating…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(API + '/api/summary', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        date_range: document.getElementById('sum-range').value,
+        concerns: document.getElementById('sum-concerns').value,
+        questions: document.getElementById('sum-questions').value,
+        specialty,
+        purpose,
+        audience,
+        recipient,
+      })
+    });
+    const data = await res.json();
+    summaryText = data.summary;
+    renderSummary(data.summary, data.generated_at, specialty, audience, recipient);
+    document.getElementById('sum-output').classList.remove('hidden');
+    document.getElementById('sum-output').scrollIntoView({behavior:'smooth'});
+  } catch(e) {
+    alert('Could not generate summary — is the backend running?');
+  } finally {
+    btn.textContent = 'Generate Summary';
+    btn.disabled = false;
+  }
+}
+
+function renderSummary(text, generatedAt, specialty, audience, recipient) {
+  const name = patientSettings.patient_name || 'Patient';
+  const isHandoff = audience === 'handoff';
+  const label = isHandoff
+    ? ` — Caregiver Handoff${recipient ? ' for ' + recipient : ''}`
+    : (specialty ? ` — ${specialty} Visit` : ' — Care Visit Summary');
+  const dateStr = new Date(generatedAt).toLocaleDateString();
+  const hdr = `${name}${label}\nGenerated ${dateStr}${(!isHandoff && patientSettings.patient_physician) ? ' · '+patientSettings.patient_physician : ''}\n\n`;
+  summaryText = hdr + text;
+
+  document.getElementById('sum-generated-at').textContent =
+    `Generated ${dateStr}` + (isHandoff ? ' · Caregiver handoff' : (specialty ? ' · ' + specialty : ''));
+
+  const ta = document.getElementById('sum-editable');
+  ta.value = summaryText;
+}
+
+function copyReport() {
+  const text = document.getElementById('sum-editable').value;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied ✓'));
+}
+
+function downloadReport() {
+  const text = document.getElementById('sum-editable').value;
+  const blob = new Blob([text], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ComCare_Visit_Summary.txt';
+  a.click();
+}
+
+// ── Chat Summarize ──────────────────────────────────────────────────────────────
+async function summarizeChat() {
+  if (chatHistory.length < 6) {
+    showToast('Have a bit more conversation first — I\'ll summarize after a few exchanges!');
+    return;
+  }
+  const btn = document.querySelector('.btn-summarize');
+  btn.textContent = 'Summarizing…';
+  btn.disabled = true;
+
+  // Show a typing indicator
+  const typingEl = appendTyping();
+
+  try {
+    const res = await fetch(API + '/api/chat/summarize', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ messages: chatHistory })
+    });
+    const data = await res.json();
+    typingEl.remove();
+
+    // Render summary card in chat
+    renderSummaryCard(data);
+  } catch(e) {
+    typingEl.remove();
+    appendMsg('ai', 'Sorry, I couldn\'t summarize right now. Please try again.');
+  } finally {
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Summarize our chat`;
+    btn.disabled = false;
+  }
+}
+
+// Store suggested records by a stable key so onclick can reference them safely
+const _pendingRecords = {};
+
+function renderSummaryCard(data) {
+  const wrap = document.getElementById('chat-messages');
+  const ts = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+  // Build record suggestion rows — store records in _pendingRecords to avoid
+  // JSON-in-onclick encoding issues with apostrophes / special characters
+  let recordsHtml = '';
+  if (data.suggested_records && data.suggested_records.length) {
+    const rows = data.suggested_records.map((r, i) => {
+      const key = 'rec_' + Date.now() + '_' + i;
+      _pendingRecords[key] = r;
+      const label = (r.card_type || 'record').replace(/_/g, ' ');
+      return `<li style="font-size:13px;margin:6px 0;line-height:1.5;">
+        <span style="display:inline-block;background:var(--sage-light);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700;text-transform:capitalize;margin-right:6px;">${escHtml(label)}</span>${escHtml(r.description||'')}
+        <button class="btn btn-outline btn-sm" style="margin-left:8px;font-size:11px;padding:3px 10px;"
+          onclick="prefillRecordFromSummary('${key}')">Save this</button>
+      </li>`;
+    }).join('');
+    recordsHtml = `<div style="margin-top:12px;">
+      <strong style="font-size:13px;color:var(--sage-dark);">📋 Suggested records to save:</strong>
+      <ul style="margin:6px 0 0;padding-left:16px;">${rows}</ul>
+    </div>`;
+  }
+
+  const card = document.createElement('div');
+  card.className = 'msg ai';
+  card.innerHTML = `
+    <div class="msg-avatar ai">CC</div>
+    <div style="flex:1">
+      <div class="chat-summary-card">
+        <h4>📝 Chat Summary</h4>
+        ${data.what_i_heard ? `<p><strong>What I heard:</strong> ${escHtml(data.what_i_heard)}</p>` : ''}
+        ${data.gaps ? `<p style="margin-top:8px;"><strong>Things to follow up:</strong> ${escHtml(data.gaps)}</p>` : ''}
+        ${recordsHtml}
+        <div class="summary-actions">
+          <button class="btn btn-outline btn-sm" onclick="nav('summary')">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Generate Visit Summary
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="continueChat(this)">Continue chatting</button>
+        </div>
+      </div>
+      <div class="msg-time">${ts}</div>
+    </div>`;
+  wrap.appendChild(card);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function continueChat(btn) {
+  // Just focus the input — let them keep going
+  document.getElementById('chat-input').focus();
+  btn.closest('.chat-summary-card').querySelector('.summary-actions').innerHTML =
+    '<span style="font-size:12px;color:var(--text-light);">Chat continues below ↓</span>';
+}
+
+// Map of card type → the field id that should receive the description
+const RECORD_DESC_FIELD = {
+  care_change:       'cc-description',
+  medication:        'med-notes',
+  coordination:      'coord-item',
+  visit_priority:    'vp-question',
+  caregiver_support: 'cs-challenge',
+  what_matters:      'wm-notes',
+};
+
+function prefillRecordFromSummary(key) {
+  const rec = _pendingRecords[key];
+  if (!rec) return;
+
+  nav('record');  // page ID is "page-record" (no 's')
+
+  setTimeout(() => {
+    const cardType = rec.card_type || 'care_change';
+    selectCard(cardType);
+
+    if (rec.description) {
+      const fieldId = RECORD_DESC_FIELD[cardType] || 'cc-description';
+      const el = document.getElementById(fieldId);
+      if (el) {
+        el.value = rec.description;
+        el.focus();
+      }
+    }
+  }, 250);
+}
+
+
+// ── Settings ───────────────────────────────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const res = await fetch(API + '/api/settings');
+    const s = await res.json();
+    patientSettings = s;
+    document.getElementById('s-ollama-url').value = s.ollama_url||'http://localhost:11434';
+    document.getElementById('s-ollama-model').value = s.ollama_model||'llama3.2';
+    document.getElementById('s-openai-key').value = s.openai_api_key||'';
+    document.getElementById('s-openai-model').value = s.openai_model||'gpt-4o-mini';
+    document.getElementById('s-azure-endpoint').value = s.azure_endpoint||'';
+    document.getElementById('s-azure-key').value = s.azure_api_key||'';
+    document.getElementById('s-azure-deployment').value = s.azure_deployment||'gpt-4o';
+    document.getElementById('s-patient-name').value = s.patient_name||'';
+    document.getElementById('s-patient-age').value = s.patient_age||'';
+    document.getElementById('s-patient-diagnosis').value = s.patient_diagnosis||'';
+    document.getElementById('s-patient-physician').value = s.patient_physician||'';
+    document.getElementById('s-patient-next-visit').value = s.patient_next_visit||'';
+    selectBackend(s.ai_backend||'ollama', false);
+    updateBackendBadge(s.ai_backend||'ollama');
+  } catch(e) {}
+}
+
+function selectBackend(backend, save=false) {
+  document.getElementById('be-ollama').className = 'backend-opt' + (backend==='ollama'?' active':'');
+  document.getElementById('be-openai').className = 'backend-opt' + (backend==='openai'?' active':'');
+  document.getElementById('be-azure').className = 'backend-opt' + (backend==='azure'?' active':'');
+  document.getElementById('ollama-config').classList.toggle('hidden', backend!=='ollama');
+  document.getElementById('openai-config').classList.toggle('hidden', backend!=='openai');
+  document.getElementById('azure-config').classList.toggle('hidden', backend!=='azure');
+  if (save) {
+    fetch(API+'/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({settings:{ai_backend:backend}})});
+    updateBackendBadge(backend);
+  }
+}
+
+async function saveSettings() {
+  const activeBackend =
+    document.getElementById('be-openai').classList.contains('active') ? 'openai' :
+    document.getElementById('be-azure').classList.contains('active') ? 'azure' : 'ollama';
+  const settings = {
+    ai_backend: activeBackend,
+    ollama_url: document.getElementById('s-ollama-url').value,
+    ollama_model: document.getElementById('s-ollama-model').value,
+    openai_model: document.getElementById('s-openai-model').value,
+    azure_endpoint: document.getElementById('s-azure-endpoint').value,
+    azure_deployment: document.getElementById('s-azure-deployment').value,
+  };
+  const openaiKey = document.getElementById('s-openai-key').value;
+  if (openaiKey && !openaiKey.startsWith('••••')) settings.openai_api_key = openaiKey;
+  const key = document.getElementById('s-azure-key').value;
+  if (key && !key.startsWith('••••')) settings.azure_api_key = key;
+  await fetch(API+'/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({settings})});
+  showToast('Settings saved ✓');
+  updateBackendBadge(settings.ai_backend);
+}
+
+async function saveProfile() {
+  const settings = {
+    patient_name: document.getElementById('s-patient-name').value,
+    patient_age: document.getElementById('s-patient-age').value,
+    patient_diagnosis: document.getElementById('s-patient-diagnosis').value,
+    patient_physician: document.getElementById('s-patient-physician').value,
+    patient_next_visit: document.getElementById('s-patient-next-visit').value,
+  };
+  await fetch(API+'/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({settings})});
+  patientSettings = {...patientSettings, ...settings};
+  showToast('Profile saved ✓');
+}
+
+async function testConnection() {
+  const res = document.getElementById('set-test-result');
+  res.classList.remove('hidden');
+  res.className = 'alert alert-info mt-8';
+  res.textContent = 'Testing connection…';
+  try {
+    const r = await fetch(API + '/api/settings/test');
+    const d = await r.json();
+    if (d.ok) {
+      res.className = 'alert alert-success mt-8';
+      res.textContent = `✓ Connected via ${d.backend}. Reply: "${d.reply}"`;
+    } else {
+      res.className = 'alert mt-8';
+      res.textContent = `✗ ${d.error}`;
+    }
+  } catch(e) {
+    res.className = 'alert mt-8';
+    res.textContent = '✗ Cannot reach ComCare backend. Run: uvicorn app:app --reload';
+  }
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1a5472;color:white;padding:10px 18px;border-radius:8px;font-size:13px;font-family:Nunito,sans-serif;z-index:9999;animation:fadeIn .2s;';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('sum-range').value =
+    (() => { const t=new Date(), f=new Date(); f.setDate(t.getDate()-14);
+      return `${f.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${t.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`; })();
+  try {
+    const s = await (await fetch(API+'/api/settings')).json();
+    patientSettings = s;
+    updateBackendBadge(s.ai_backend||'ollama');
+  } catch(e) {}
+
+  // ── Service Worker registration ──────────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      console.log('ComCare SW registered:', reg.scope);
+    } catch(e) {
+      console.warn('SW registration failed:', e);
+    }
+  }
+});
+</script>
+</body>
+</html>
